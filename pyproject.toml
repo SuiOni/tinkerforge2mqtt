@@ -9,12 +9,12 @@ authors = [
 ]
 requires-python = ">=3.11"
 dependencies = [
-    "tinkerforge",  # https://www.tinkerforge.com/doc/Source_Code.html
-    "ha-services>=2.5.0",  # https://github.com/jedie/ha-services
-    "cli-base-utilities",  # https://github.com/jedie/cli-base-utilities
-    "bx_py_utils",  # https://github.com/boxine/bx_py_utils
-    "tyro",  # https://github.com/brentyi/tyro
-    "rich",  # https://github.com/Textualize/rich
+    "tinkerforge", # https://www.tinkerforge.com/doc/Source_Code.html
+    "ha-services>=2.15.1", # https://github.com/jedie/ha-services
+    "cli-base-utilities", # https://github.com/jedie/cli-base-utilities
+    "bx_py_utils", # https://github.com/boxine/bx_py_utils
+    "tyro", # https://github.com/brentyi/tyro
+    "rich", # https://github.com/Textualize/rich
 ]
 
 [dependency-groups]

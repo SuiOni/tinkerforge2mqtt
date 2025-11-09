@@ -1480,7 +1480,7 @@ dev = [
 requires-dist = [
     { name = "bx-py-utils" },
     { name = "cli-base-utilities" },
-    { name = "ha-services", specifier = ">=2.5.0" },
+    { name = "ha-services", specifier = ">=2.15.1" },
     { name = "rich" },
     { name = "tinkerforge" },
     { name = "tyro" },
