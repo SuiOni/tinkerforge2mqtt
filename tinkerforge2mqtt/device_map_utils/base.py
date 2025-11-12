@@ -35,10 +35,10 @@ class DeviceMapBase(abc.ABC):
 
         self.mqtt_device = MqttDevice(
             main_device=main_mqtt_device,
-            name=f'{device.DEVICE_DISPLAY_NAME} ({device.uid_string})',
+            name=f'{device.device_display_name} ({device.uid_string})',
             uid=device.uid_string,
             manufacturer='Tinkerforge',
-            model=device.DEVICE_DISPLAY_NAME,
+            model=device.device_display_name,
             sw_version=self.get_sw_version(),
         )
 
@@ -70,18 +70,18 @@ class DeviceMapBase(abc.ABC):
 
     def iter_known_functions(self, device: Device):
         assert (
-            device.DEVICE_IDENTIFIER == self.device_identifier
+            device.device_identifier == self.device_identifier
         ), f'Wrong device: {device} is not {self.device_identifier}'
 
         yield from iter_interest_functions(device)
 
     @print_exception_decorator
     def poll(self):
-        logger.info(f'Polling {self.device.DEVICE_DISPLAY_NAME} ({self.device.uid_string})')
+        logger.info(f'Polling {self.device.device_display_name} ({self.device.uid_string})')
 
         if get_chip_temperature := getattr(self.device, 'get_chip_temperature', None):
             value = get_chip_temperature()
-            logger.debug(f'{self.device.DEVICE_DISPLAY_NAME} chip temperature: {value}°C')
+            logger.debug(f'{self.device.device_display_name} chip temperature: {value}°C')
             self.chip_temperature_sensor.set_state(state=value)
             self.chip_temperature_sensor.publish(self.mqtt_client)
             logger.info(f'Chip temperature: {value}°C: {self.chip_temperature_sensor}')

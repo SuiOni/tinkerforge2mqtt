@@ -10,7 +10,7 @@ authors = [
 requires-python = ">=3.11"
 dependencies = [
     "tinkerforge", # https://www.tinkerforge.com/doc/Source_Code.html
-    "ha-services>=2.15.1", # https://github.com/jedie/ha-services
+    "ha-services @ git+https://github.com/SuiOni/ha-services.git@main",
     "cli-base-utilities", # https://github.com/jedie/cli-base-utilities
     "bx_py_utils", # https://github.com/boxine/bx_py_utils
     "tyro", # https://github.com/brentyi/tyro
@@ -54,6 +54,8 @@ packages = ["tinkerforge2mqtt"]
 [tool.hatch.version]
 path = "tinkerforge2mqtt/__init__.py"
 
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.cli_base.pip_audit]
 strict=true

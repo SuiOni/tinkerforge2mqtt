@@ -543,7 +543,7 @@ wheels = [
 [[package]]
 name = "ha-services"
 version = "2.15.1"
-source = { registry = "https://pypi.org/simple" }
+source = { git = "https://github.com/SuiOni/ha-services.git?rev=main#c568348750de5b17a1c8f736874eef5e7c18d626" }
 dependencies = [
     { name = "cli-base-utilities" },
     { name = "frozendict" },
@@ -553,10 +553,6 @@ dependencies = [
     { name = "rich" },
     { name = "tomlkit" },
     { name = "tyro" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/a5/c1/8291461ecd2f6983b455432e90e80a86b3826cf85c64358e23c914e07ecd/ha_services-2.15.1.tar.gz", hash = "sha256:b7f83fa01892f970f5e9eb7987aa926b86a6475b066eda37cc7f6062915f8267", size = 111066, upload-time = "2025-10-25T16:44:48.066Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/0c/64/868b8d8c4e082e72ae300cd7788b00407e576c31eafce6af37fb8b783ec9/ha_services-2.15.1-py3-none-any.whl", hash = "sha256:54a5f579039728a9df0ca785b5c6d9021a00283b7486eac1996a12348839d3a2", size = 61982, upload-time = "2025-10-25T16:44:46.854Z" },
 ]
 
 [[package]]
@@ -1480,7 +1476,7 @@ dev = [
 requires-dist = [
     { name = "bx-py-utils" },
     { name = "cli-base-utilities" },
-    { name = "ha-services", specifier = ">=2.15.1" },
+    { name = "ha-services", git = "https://github.com/SuiOni/ha-services.git?rev=main" },
     { name = "rich" },
     { name = "tinkerforge" },
     { name = "tyro" },
