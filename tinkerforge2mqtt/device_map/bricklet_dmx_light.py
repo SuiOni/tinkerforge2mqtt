@@ -34,7 +34,9 @@ class BrickletDMXMapper(DeviceMapBase):
             callback_brightness=self.brightness_callback,
             callback_switch=self.switch_callback,
             callback_rgb=self.rgb_callback,
-            default_brightness=100, # Brightness gooes from 1 to 100
+            default_brightness=100, #
+            min_brightness=1,
+            max_brightness=100,
         )
         logger.info(f'Creating: {self.dmx_light}')
 
@@ -155,14 +157,8 @@ class BrickletDMXMapper(DeviceMapBase):
                 g = int(rgb[1] * brightness_factor)
                 b = int(rgb[2] * brightness_factor)
 
-                # Set RGB values on DMX channels 1, 2, 3 (index 0, 1, 2)
-                self.dmx_frame[0] = r
-                self.dmx_frame[1] = g
-                self.dmx_frame[2] = b
+                self.set_rgb_fixture(0, r, g, b)
 
-                # Send DMX frame
-                self.device.write_frame(self.dmx_frame)
-                logger.info(f'DMX brightness updated: {new_state}% - RGB: R={r}, G={g}, B={b}')
             else:
                 logger.info(f'DMX brightness updated but light is off - storing brightness: {new_state}%')
 
@@ -190,9 +186,9 @@ class BrickletDMXMapper(DeviceMapBase):
     def set_rgb_fixture(self, start_channel: int, r: int, g: int, b: int):
         """Set RGB values for a fixture starting at the given channel"""
         if 1 <= start_channel <= 510:  # Need at least 3 channels
-            self.dmx_frame[start_channel - 1] = r
-            self.dmx_frame[start_channel] = g
-            self.dmx_frame[start_channel + 1] = b
+            self.dmx_frame[start_channel] = r
+            self.dmx_frame[start_channel + 1] = g
+            self.dmx_frame[start_channel + 2] = b
             try:
                 self.device.write_frame(self.dmx_frame)
                 logger.info(f'RGB fixture at channel {start_channel} set to R={r}, G={g}, B={b}')
