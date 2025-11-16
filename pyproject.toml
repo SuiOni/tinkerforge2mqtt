@@ -10,7 +10,7 @@ authors = [
 requires-python = ">=3.11"
 dependencies = [
     "tinkerforge", # https://www.tinkerforge.com/doc/Source_Code.html
-    "ha-services @ git+https://github.com/SuiOni/ha-services.git@58c14e3",
+    "ha-services @ git+https://github.com/SuiOni/ha-services.git@88af048",
     "cli-base-utilities", # https://github.com/jedie/cli-base-utilities
     "bx_py_utils", # https://github.com/boxine/bx_py_utils
     "tyro", # https://github.com/brentyi/tyro

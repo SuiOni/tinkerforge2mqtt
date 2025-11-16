@@ -35,8 +35,8 @@ class BrickletDMXMapper(DeviceMapBase):
             callback_switch=self.switch_callback,
             callback_rgb=self.rgb_callback,
             default_brightness=100, #
-            min_brightness=1,
-            max_brightness=100,
+            min_brightness=0,
+            max_brightness=255,
         )
         logger.info(f'Creating: {self.dmx_light}')
 
@@ -57,7 +57,7 @@ class BrickletDMXMapper(DeviceMapBase):
         super().poll()
         # DMX lights don't need regular polling for state updates
         # The light state is maintained by the device itself
-        pass
+        self.dmx_light.publish(self.mqtt_client)
 
     @print_exception_decorator
     def switch_callback(self, *, client: Client, component: Light, old_state: str, new_state: str):
@@ -72,17 +72,8 @@ class BrickletDMXMapper(DeviceMapBase):
                 brightness = getattr(component, 'state_brightness', 100)
                 rgb = getattr(component, 'state_rgb', [255, 255, 255])
 
-                # Apply brightness scaling to RGB values
-                brightness_factor = brightness / 100.0  # Light component uses 0-100 range
-                r = int(rgb[0] * brightness_factor)
-                g = int(rgb[1] * brightness_factor)
-                b = int(rgb[2] * brightness_factor)
-
-                # Set RGB values on DMX channels 1, 2, 3 (index 0, 1, 2)
-                self.dmx_frame[0] = r
-                self.dmx_frame[1] = g
-                self.dmx_frame[2] = b
-                logger.info(f'DMX light turned ON - RGB: R={r}, G={g}, B={b} (brightness: {brightness}%)')
+                self.set_rgb_fixture(1, rgb=rgb, brightness=brightness)
+                logger.info(f'DMX light turned ON - RGB: (brightness: {brightness}%)')
 
             else:
                 # Turn off - set RGB channels to 0
@@ -96,10 +87,9 @@ class BrickletDMXMapper(DeviceMapBase):
 
             # Update component state and publish
             component.set_state_switch(new_state)
-            component.publish_state_switch(client)
-
         except Exception as e:
             logger.error(f'Failed to control DMX switch: {e}')
+        self.poll()
 
     @print_exception_decorator
     def rgb_callback(self, *, client: Client, component: Light, old_state: list[int], new_state: list[int]):
@@ -113,30 +103,18 @@ class BrickletDMXMapper(DeviceMapBase):
             if is_on:
                 # Get current brightness for scaling
                 brightness = getattr(component, 'state_brightness', 100)
-                brightness_factor = brightness / 100.0  # Light component uses 0-100 range
+                self.set_rgb_fixture(start_channel=1, rgb=new_state,brightness=brightness)
 
-                # Apply brightness scaling to new RGB values
-                r = int(new_state[0] * brightness_factor)
-                g = int(new_state[1] * brightness_factor)
-                b = int(new_state[2] * brightness_factor)
 
-                # Set RGB values on DMX channels 1, 2, 3 (index 0, 1, 2)
-                self.dmx_frame[0] = r
-                self.dmx_frame[1] = g
-                self.dmx_frame[2] = b
-
-                # Send DMX frame
-                self.device.write_frame(self.dmx_frame)
-                logger.info(f'DMX RGB updated: R={r}, G={g}, B={b} (raw: {new_state}, brightness: {brightness}%)')
+                logger.info(f'DMX RGB updated:(raw: {new_state}, brightness: {brightness}%)')
             else:
                 logger.info(f'DMX RGB updated but light is off - storing color: {new_state}')
-
+                self.set_rgb_fixture(start_channel=1, rgb=new_state,brightness=0)
             # Update component state and publish
             component.set_state_rgb(new_state)
-            component.publish_state_rgb(client)
-
         except Exception as e:
             logger.error(f'Failed to control DMX RGB: {e}')
+        self.poll()
 
     @print_exception_decorator
     def brightness_callback(self, *, client: Client, component: Light, old_state: int, new_state: int):
@@ -151,23 +129,15 @@ class BrickletDMXMapper(DeviceMapBase):
                 # Get current RGB values
                 rgb = getattr(component, 'state_rgb', [255, 255, 255])
 
-                # Apply new brightness scaling to RGB values
-                brightness_factor = new_state / 100.0  # Light component uses 0-100 range
-                r = int(rgb[0] * brightness_factor)
-                g = int(rgb[1] * brightness_factor)
-                b = int(rgb[2] * brightness_factor)
-
-                self.set_rgb_fixture(0, r, g, b)
-
             else:
                 logger.info(f'DMX brightness updated but light is off - storing brightness: {new_state}%')
 
             # Update component state and publish
             component.set_state_brightness(new_state)
-            component.publish_state_brightness(client)
 
         except Exception as e:
             logger.error(f'Failed to control DMX brightness: {e}')
+        self.poll()
 
     @print_exception_decorator
     def set_dmx_channel(self, channel: int, value: int):
@@ -183,7 +153,12 @@ class BrickletDMXMapper(DeviceMapBase):
             logger.error(f'Invalid DMX channel ({channel}) or value ({value})')
 
     @print_exception_decorator
-    def set_rgb_fixture(self, start_channel: int, r: int, g: int, b: int):
+    def set_rgb_fixture(self, start_channel: int, rgb: list[int], brightness:int=100):
+        b_factor = brightness / 255.0
+        r, g, b = rgb
+        r = int(r * b_factor)
+        g = int(g * b_factor)
+        b = int(b * b_factor)
         """Set RGB values for a fixture starting at the given channel"""
         if 1 <= start_channel <= 510:  # Need at least 3 channels
             self.dmx_frame[start_channel] = r

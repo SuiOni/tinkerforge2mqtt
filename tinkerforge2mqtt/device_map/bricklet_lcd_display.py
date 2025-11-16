@@ -44,14 +44,14 @@ class BrickletLCD128x64Mapper(DeviceMapBase):
         # LCD displays don't need regular polling for state updates
         # The display state is maintained by the device itself
         self.lcd_display.publish(self.mqtt_client)
-        pass
+
 
     @print_exception_decorator
     def display_callback(self, *, client: Client, component: Text, old_state: str, new_state: str):
         logger.info(f'{component.name} text changed: {old_state!r} -> {new_state!r}')
 
         # Split text into lines (max 4 lines, 21 chars each)
-        lines = new_state.split('\n')
+        lines = new_state.split('\\n')
 
         try:
             # Clear display first
