@@ -36,36 +36,19 @@ class BrickletLCD128x64Mapper(DeviceMapBase):
 
     @print_exception_decorator
     def setup_callbacks(self):
-        logger.info(f'setup_callbacks {self}')
-        super().setup_callbacks()
-
-        # Initialize LCD display
-        try:
-            self.device.clear_display()
-            logger.info(f'LCD display cleared and initialized (UID: {self.device.uid_string})')
-        except Exception as e:
-            logger.error(f'Failed to initialize LCD display: {e}')
+       pass  # TODO
 
     @print_exception_decorator
     def poll(self):
         super().poll()
         # LCD displays don't need regular polling for state updates
         # The display state is maintained by the device itself
+        self.lcd_display.publish(self.mqtt_client)
         pass
 
     @print_exception_decorator
     def display_callback(self, *, client: Client, component: Text, old_state: str, new_state: str):
         logger.info(f'{component.name} text changed: {old_state!r} -> {new_state!r}')
-
-        # Handle clear command
-        if new_state.lower() in ('clear', 'cls', 'reset', ''):
-            try:
-                self.device.clear_display()
-                logger.info(f'LCD display cleared')
-                return
-            except Exception as e:
-                logger.error(f'Failed to clear LCD display: {e}')
-                return
 
         # Split text into lines (max 4 lines, 21 chars each)
         lines = new_state.split('\n')
@@ -73,7 +56,6 @@ class BrickletLCD128x64Mapper(DeviceMapBase):
         try:
             # Clear display first
             self.device.clear_display()
-
             # Write up to 4 lines
             for line_num, line_text in enumerate(lines[:4]):
                 if line_text:  # Only write non-empty lines
@@ -81,8 +63,11 @@ class BrickletLCD128x64Mapper(DeviceMapBase):
                     truncated_text = line_text[:21]
                     self.device.write_line(line_num, 0, truncated_text)
                     logger.info(f'LCD line {line_num} updated: {truncated_text}')
-
             logger.info(f'LCD display updated with {len(lines[:4])} lines')
-
+            self.lcd_display.set_state(new_state)
         except Exception as e:
+            self.device.write_line(0, 0, 'Fail to write LCD')
+            self.lcd_display.set_state('Fail to write LCD')
             logger.error(f'Failed to write to LCD display: {e}')
+
+        self.poll()  # Refresh state after update
