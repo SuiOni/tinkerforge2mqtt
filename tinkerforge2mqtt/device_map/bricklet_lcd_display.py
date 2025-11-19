@@ -49,15 +49,14 @@ class BrickletLCD128x64Mapper(DeviceMapBase):
     @print_exception_decorator
     def display_callback(self, *, client: Client, component: Text, old_state: str, new_state: str):
         logger.info(f'{component.name} text changed: {old_state!r} -> {new_state!r}')
-
         # Split text into lines (max 4 lines, 21 chars each)
-        lines = new_state.split('\\n')
-
+        lines = new_state.strip().split('\n')
+        lines = [lines.strip() for lines in lines if lines.strip()][:8]
         try:
             # Clear display first
             self.device.clear_display()
             # Write up to 4 lines
-            for line_num, line_text in enumerate(lines[:4]):
+            for line_num, line_text in enumerate(lines):
                 if line_text:  # Only write non-empty lines
                     # Truncate to 21 characters per line
                     truncated_text = line_text[:21]

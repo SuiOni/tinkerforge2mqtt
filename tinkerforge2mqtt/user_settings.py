@@ -40,6 +40,6 @@ class UserSettings:
     callback_period: int = 1  # in seconds
 
     # Information about the MQTT server:
-    mqtt: dataclasses = dataclasses.field(default_factory=MqttSettings)
+    mqtt: MqttSettings = dataclasses.field(default_factory=MqttSettings)
 
-    systemd: dataclasses = dataclasses.field(default_factory=SystemdServiceInfo)
+    systemd: SystemdServiceInfo = dataclasses.field(default_factory=SystemdServiceInfo)

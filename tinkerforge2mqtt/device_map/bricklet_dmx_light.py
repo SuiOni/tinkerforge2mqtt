@@ -11,6 +11,7 @@ from tinkerforge2mqtt.device_map_utils.utils import print_exception_decorator
 
 logger = logging.getLogger(__name__)
 
+MAX_BRIGHTNESS = 255
 
 @register_map_class()
 class BrickletDMXMapper(DeviceMapBase):
@@ -33,10 +34,10 @@ class BrickletDMXMapper(DeviceMapBase):
             uid='dmx_light',
             callback_brightness=self.brightness_callback,
             callback_switch=self.switch_callback,
-            callback_rgb=self.rgb_callback,
-            default_brightness=100, #
+            callback_rgbw=self.rgbw_callback,
+            default_brightness=100,
             min_brightness=0,
-            max_brightness=255,
+            max_brightness=MAX_BRIGHTNESS,
         )
         logger.info(f'Creating: {self.dmx_light}')
 
@@ -65,21 +66,17 @@ class BrickletDMXMapper(DeviceMapBase):
 
         try:
             is_on = new_state == component.ON
-
+            rgbw = getattr(component, 'state_rgbw', [MAX_BRIGHTNESS, MAX_BRIGHTNESS, MAX_BRIGHTNESS, MAX_BRIGHTNESS])
             if is_on:
                 # Turn on: restore previous brightness and color values
-                # Use current component states for brightness and RGB
-                brightness = getattr(component, 'state_brightness', 100)
-                rgb = getattr(component, 'state_rgb', [255, 255, 255])
+                # Use current component states for brightness and RGBW
+                brightness = getattr(component, 'state_brightness', MAX_BRIGHTNESS)
 
-                self.set_rgb_fixture(1, rgb=rgb, brightness=brightness)
-                logger.info(f'DMX light turned ON - RGB: (brightness: {brightness}%)')
+                self.set_rgbw_fixture(1, rgbw=rgbw, brightness=brightness)
+                logger.info(f'DMX light turned ON - RGBW: (brightness: {brightness}%)')
 
             else:
-                # Turn off - set RGB channels to 0
-                self.dmx_frame[0] = 0
-                self.dmx_frame[1] = 0
-                self.dmx_frame[2] = 0
+                self.set_rgbw_fixture(1, rgbw=rgbw, brightness=0)
                 logger.info('DMX light turned OFF')
 
             # Send DMX frame
@@ -92,8 +89,8 @@ class BrickletDMXMapper(DeviceMapBase):
         self.poll()
 
     @print_exception_decorator
-    def rgb_callback(self, *, client: Client, component: Light, old_state: list[int], new_state: list[int]):
-        logger.info(f'{component.name} RGB state changed: {old_state!r} -> {new_state!r}')
+    def rgbw_callback(self, *, client: Client, component: Light, old_state: list[int], new_state: list[int]):
+        logger.info(f'{component.name} RGBW state changed: {old_state!r} -> {new_state!r}')
 
         try:
             # Check if light is currently on
@@ -102,14 +99,14 @@ class BrickletDMXMapper(DeviceMapBase):
 
             if is_on:
                 # Get current brightness for scaling
-                brightness = getattr(component, 'state_brightness', 100)
-                self.set_rgb_fixture(start_channel=1, rgb=new_state,brightness=brightness)
+                brightness = getattr(component, 'state_brightness', MAX_BRIGHTNESS)
+                self.set_rgbw_fixture(start_channel=1, rgbw=new_state,brightness=brightness)
 
 
                 logger.info(f'DMX RGB updated:(raw: {new_state}, brightness: {brightness}%)')
             else:
                 logger.info(f'DMX RGB updated but light is off - storing color: {new_state}')
-                self.set_rgb_fixture(start_channel=1, rgb=new_state,brightness=0)
+                self.set_rgbw_fixture(start_channel=1, rgbw=new_state,brightness=0)
             # Update component state and publish
             component.set_state_rgb(new_state)
         except Exception as e:
@@ -124,14 +121,6 @@ class BrickletDMXMapper(DeviceMapBase):
             # Check if light is currently on
             switch_state = getattr(component, 'state_switch', component.ON)
             is_on = switch_state == component.ON
-
-            if is_on:
-                # Get current RGB values
-                rgb = getattr(component, 'state_rgb', [255, 255, 255])
-
-            else:
-                logger.info(f'DMX brightness updated but light is off - storing brightness: {new_state}%')
-
             # Update component state and publish
             component.set_state_brightness(new_state)
 
@@ -142,7 +131,7 @@ class BrickletDMXMapper(DeviceMapBase):
     @print_exception_decorator
     def set_dmx_channel(self, channel: int, value: int):
         """Set a specific DMX channel value (1-512)"""
-        if 1 <= channel <= 512 and 0 <= value <= 255:
+        if 1 <= channel <= 512 and 0 <= value <= MAX_BRIGHTNESS:
             self.dmx_frame[channel - 1] = value  # DMX channels are 1-based
             try:
                 self.device.write_frame(self.dmx_frame)
@@ -153,21 +142,23 @@ class BrickletDMXMapper(DeviceMapBase):
             logger.error(f'Invalid DMX channel ({channel}) or value ({value})')
 
     @print_exception_decorator
-    def set_rgb_fixture(self, start_channel: int, rgb: list[int], brightness:int=100):
-        b_factor = brightness / 255.0
-        r, g, b = rgb
+    def set_rgbw_fixture(self, start_channel: int, rgbw: list[int], brightness:int=100):
+        b_factor = brightness / MAX_BRIGHTNESS
+        r, g, b, w = rgbw
         r = int(r * b_factor)
         g = int(g * b_factor)
         b = int(b * b_factor)
-        """Set RGB values for a fixture starting at the given channel"""
+        w = int(w * b_factor)
+        """Set RGBW values for a fixture starting at the given channel"""
         if 1 <= start_channel <= 510:  # Need at least 3 channels
             self.dmx_frame[start_channel] = r
             self.dmx_frame[start_channel + 1] = g
             self.dmx_frame[start_channel + 2] = b
+            self.dmx_frame[start_channel + 3] = w
             try:
                 self.device.write_frame(self.dmx_frame)
-                logger.info(f'RGB fixture at channel {start_channel} set to R={r}, G={g}, B={b}')
+                logger.info(f'RGBW fixture at channel {start_channel} set to R={r}, G={g}, B={b}, W={w}')
             except Exception as e:
-                logger.error(f'Failed to set RGB fixture: {e}')
+                logger.error(f'Failed to set RGBW fixture: {e}')
         else:
-            logger.error(f'Invalid start channel for RGB fixture: {start_channel}')
+            logger.error(f'Invalid start channel for RGBW fixture: {start_channel}')
