@@ -108,7 +108,7 @@ class BrickletDMXMapper(DeviceMapBase):
                 logger.info(f'DMX RGB updated but light is off - storing color: {new_state}')
                 self.set_rgbw_fixture(start_channel=1, rgbw=new_state,brightness=0)
             # Update component state and publish
-            component.set_state_rgb(new_state)
+            component.set_state_rgbw(new_state)
         except Exception as e:
             logger.error(f'Failed to control DMX RGB: {e}')
         self.poll()
