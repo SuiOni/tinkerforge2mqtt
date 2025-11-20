@@ -543,7 +543,7 @@ wheels = [
 [[package]]
 name = "ha-services"
 version = "2.15.1"
-source = { git = "https://github.com/SuiOni/ha-services.git?rev=612a9f4#612a9f48e22930a1c56b2f8b7ccfd2732c598c98" }
+source = { git = "https://github.com/SuiOni/ha-services.git?rev=fa266fc#fa266fc9f5d00d290ed3bbf5a5fc1ab4ad9e4e82" }
 dependencies = [
     { name = "cli-base-utilities" },
     { name = "frozendict" },
@@ -1476,7 +1476,7 @@ dev = [
 requires-dist = [
     { name = "bx-py-utils" },
     { name = "cli-base-utilities" },
-    { name = "ha-services", git = "https://github.com/SuiOni/ha-services.git?rev=612a9f4" },
+    { name = "ha-services", git = "https://github.com/SuiOni/ha-services.git?rev=fa266fc" },
     { name = "rich" },
     { name = "tinkerforge" },
     { name = "tyro" },
